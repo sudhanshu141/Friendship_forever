@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>A Special Delivery For You 💌 | Happy Friendship Day</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- External Libraries (jsPDF, Canvas Confetti & EmailJS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- EmailJS: lets this static page actually SEND an email with the PDF attached.
+       A plain mailto: link (used previously) cannot attach files — browsers block that
+       for security reasons — so EmailJS is required to truly deliver the PDF. -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cork: '#BD8E60',
+            corkDark: '#A37447',
+            cream: '#FFF9EE',
+            creamCard: '#FFFDF7',
+            washiPink: '#FFB7C5',
+            washiTeal: '#A8E6CF',
+            washiYellow: '#FFD3B6',
+            inkBlue: '#1E293B'
+          },
+          fontFamily: {
+            heading: ['"Baloo 2"', 'cursive', 'sans-serif'],
+            handwriting: ['"Caveat"', 'cursive'],
+            sans: ['"Inter"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar & Aesthetics */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+    ::-webkit-scrollbar-thumb { background: #BD8E60; border-radius: 3px; }
+
+    body {
+      background-color: #BD8E60;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.1) 15%, transparent 16%),
+        radial-gradient(rgba(0, 0, 0, 0.15) 15%, transparent 16%);
+      background-size: 60px 60px;
+      background-position: 0 0, 30px 30px;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* Corkboard Frame Effect */
+    .cork-container {
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.4);
+    }
+
+    /* Cream Card Styling */
+    .scrapbook-card {
+      background-color: #FFF9EE;
+      box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.3), 
+        0 8px 10px -6px rgba(0, 0, 0, 0.2),
+        inset 0 0 40px rgba(230, 210, 180, 0.2);
+      border-radius: 1.5rem;
+      position: relative;
+    }
+
+    /* Pushpin 3D element */
+    .pushpin {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 28px;
+      height: 28px;
+      background: radial-gradient(circle at 35% 35%, #ff6b6b, #cc0000, #880000);
+      border-radius: 50%;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.4), inset -2px -2px 4px rgba(0,0,0,0.5), inset 2px 2px 4px rgba(255,255,255,0.8);
+      z-index: 30;
+    }
+    .pushpin::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 6px;
+      background: #777;
+      border-radius: 1px;
+    }
+
+    /* Washi Tape Effect */
+    .washi-tape {
+      position: absolute;
+      width: 90px;
+      height: 26px;
+      background-color: rgba(255, 183, 197, 0.75);
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.3) 10px, rgba(255,255,255,0.3) 20px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      z-index: 20;
+      backdrop-filter: blur(1px);
+    }
+    .washi-tape-left { top: -10px; left: -15px; transform: rotate(-12deg); }
+    .washi-tape-right { top: -10px; right: -15px; transform: rotate(15deg); }
+    .washi-tape-teal { background-color: rgba(168, 230, 207, 0.8); }
+    .washi-tape-yellow { background-color: rgba(255, 211, 182, 0.8); }
+
+    /* Notebook Paper Styling */
+    .ruled-paper {
+      background-color: #FFFDF7;
+      background-image: repeating-linear-gradient(#FFFDF7, #FFFDF7 31px, #91b0d5 32px);
+      line-height: 32px;
+      box-shadow: inset 25px 0 0 #ffb3b3, inset 27px 0 0 #ffffff;
+    }
+
+    /* Page Transitions */
+    .page-step {
+      transition: opacity 280ms cubic-bezier(0.4, 0, 0.2, 1), transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: scale(0.96) translateY(12px);
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page-step.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* Floating Animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(4deg); }
+    }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+    .animate-float-delayed { animation: float 5s ease-in-out 1.5s infinite; }
+
+    /* Dodge Button Wobble Animation */
+    @keyframes dodgeWobble {
+      0% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.08) rotate(-6deg); }
+      50% { transform: scale(0.95) rotate(6deg); }
+      75% { transform: scale(1.05) rotate(-3deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .dodge-wobble { animation: dodgeWobble 0.35s ease-in-out; }
+
+    /* Emoji Puff Animation */
+    .emoji-puff {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.8rem;
+      animation: puffOut 0.6s ease-out forwards;
+      z-index: 999;
+    }
+    @keyframes puffOut {
+      0% { opacity: 1; transform: scale(0.6) translateY(0); }
+      100% { opacity: 0; transform: scale(1.8) translateY(-30px); }
+    }
+
+    /* Polaroid Image Shadow */
+    .polaroid-frame {
+      background: white;
+      padding: 12px 12px 18px 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease;
+    }
+    .polaroid-frame:hover {
+      transform: scale(1.02) rotate(-1deg);
+    }
+
+    /* Friendship Progress Bead Badges */
+    .progress-bead {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .progress-bead.active {
+      transform: scale(1.2);
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+      background-color: #FEF3C7;
+      border-color: #F59E0B;
+    }
+    .progress-bead.completed {
+      background-color: #FFE4E6;
+      border-color: #FB7185;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-6 cork-container font-sans selection:bg-amber-200">
+
+  <script>
+    // ====================================================================
+    // EMAILJS CONFIG — REQUIRED FOR THE PDF EMAIL TO ACTUALLY SEND
+    // 1. Create a free account at https://www.emailjs.com
+    // 2. Add an Email Service (e.g. Gmail) -> copy its Service ID below
+    // 3. Create an Email Template with variables: {{from_name}}, {{from_email}},
+    //    {{reply_to}}, {{selected_option}}, {{event_datetime}}, {{message}}
+    //    and add an Attachment in the template set to "Attach from variable"
+    //    using the variable name {{pdf_attachment}} (this is where the
+    //    Friendship Day keepsake PDF gets inserted). Copy the Template ID below.
+    // 4. In EmailJS dashboard -> Account -> General, copy your Public Key below.
+    // ====================================================================
+    const EMAILJS_PUBLIC_KEY  = "YOUR_EMAILJS_PUBLIC_KEY";
+    const EMAILJS_SERVICE_ID  = "YOUR_EMAILJS_SERVICE_ID";
+    const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
+
+    try {
+      if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+    } catch(e) { console.error("EmailJS init failed", e); }
+
+    const playChime = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch(e) {}
+    };
+  </script>
+
+  <!-- Top Bar & Progress Trail -->
+  <header class="w-full max-w-lg mx-auto mb-2 z-40 flex items-center justify-between px-2">
+    <!-- Back Button -->
+    <button id="backBtn" onclick="prevPage()" class="hidden flex items-center gap-1 bg-amber-100/90 hover:bg-amber-200 text-amber-900 px-3 py-1.5 rounded-full text-xs font-bold shadow transition-all active:scale-95 border border-amber-300/60 backdrop-blur">
+      <span>←</span> Back
+    </button>
+    <div id="backPlaceholder" class="w-16"></div>
+
+    <!-- Friendship Themed Progress Dots / Beads -->
+    <div class="flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full shadow-inner border border-white/20" id="progressDots">
+      <!-- Friendship Beads injected via JS -->
+    </div>
+
+    <!-- Edit Drawer Toggle (Shown only if ?edit=1) -->
+    <button id="editToggleBtn" onclick="toggleEditDrawer()" class="hidden bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md transition-all">
+      ✎ Customize
+    </button>
+  </header>
+
+  <!-- MAIN CARD CONTAINER -->
+  <main class="w-full max-w-lg mx-auto relative flex-1 min-h-[580px] sm:min-h-[620px] flex items-center justify-center">
+
+    <!-- PAGE 1: COVER -->
+    <section id="page-1" class="page-step active w-full">
+      <div class="scrapbook-card w-full p-6 sm:p-8 text-center animate-float">
+        <div class="pushpin"></div>
+        <div class="washi-tape washi-tape-left"></div>
+        <div class="washi-tape washi-tape-right washi-tape-teal"></div>
+
+        <div class="my-4">
+          <span class="inline-block text-5xl mb-2 animate-bounce">💌</span>
+          <h2 class="text-xs uppercase tracking-widest text-amber-800 font-bold mb-1">Knock Knock...</h2>
+          <h1 class="font-heading text-3xl sm:text-4xl font-extrabold text-amber-950 leading-tight">
+            Special Delivery For You!
+          </h1>
+          <p class="font-handwriting text-2xl text-rose-700 mt-2 font-semibold">
+            Someone made a keepsake just for you...
+          </p>
+        </div>
+
+        <div class="bg-amber-100/50 p-4 rounded-2xl border border-amber-200/60 my-6 shadow-inner">
+          <label for="friendNameInput" class="block text-xs font-semibold text-amber-900 mb-1">
+            Who is opening this invitation?
+          </label>
+          <input type="text" id="friendNameInput" placeholder="Enter your name..." 
+            class="w-full px-4 py-2.5 rounded-xl border-2 border-amber-300 focus:border-rose-500 focus:outline-none text-center font-heading text-lg font-bold text-slate-800 shadow-sm bg-white transition-all">
+        </div>
+
+        <button onclick="submitNameAndNext()" class="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-heading text-xl font-bold py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2">
+          <span>Open It</span>
+          <span class="text-2xl">→</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 2: THE WISH -->
+    <section id="page-2" class="page-step w-full">
+      <div class="scrapbook-card w-full p-6 sm:p-8 text-center">
+        <div class="pushpin"></div>
+        <div class="washi-tape washi-tape-left washi-tape-yellow"></div>
+        <div class="washi-tape washi-tape-right"></div>
+
+        <div class="relative py-2">
+          <span class="absolute -top-4 right-4 text-3xl animate-float">✨</span>
+          <span class="absolute top-10 left-2 text-2xl animate-float-delayed">🌸</span>
+
+          <span class="inline-block text-6xl mb-3">🎉</span>
+          <h1 class="font-heading text-3xl sm:text-4xl font-extrabold text-amber-950 leading-snug">
+            Happy Friendship Day, <br>
+            <span id="wishNameDisplay" class="text-rose-600 underline decoration-wavy decoration-rose-400">My Friend</span>!
+          </h1>
+
+          <div class="my-6 p-4 bg-amber-50 rounded-2xl border border-amber-200/80 shadow-sm">
+            <p id="wishSubtitle" class="font-handwriting text-2.5xl sm:text-3xl text-amber-900 leading-relaxed">
+              "Because life is infinitely sweeter, funnier, and warmer with you in my corner."
+            </p>
+          </div>
+
+          <p class="text-xs text-amber-800 font-medium mb-6">
+            Hold tight, I wrote a small note for you on the next page... 📖
+          </p>
+
+          <button onclick="nextPage()" class="w-full bg-amber-800 hover:bg-amber-900 text-amber-50 font-heading text-lg font-bold py-3 px-6 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+            <span>Read Note</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 3: HANDWRITTEN NOTE -->
+    <section id="page-3" class="page-step w-full">
+      <div class="scrapbook-card w-full p-5 sm:p-7">
+        <div class="pushpin"></div>
+        <div class="washi-tape washi-tape-left"></div>
+        <div class="washi-tape washi-tape-right washi-tape-teal"></div>
+
+        <div class="ruled-paper p-5 sm:p-6 rounded-xl border border-amber-200 relative my-2 overflow-hidden max-h-[460px] overflow-y-auto">
+          <p id="letterContent" class="font-handwriting text-2xl sm:text-2.5xl text-slate-800 leading-relaxed">
+            <!-- Letter injected via JS -->
+          </p>
+          <div class="text-right mt-4">
+            <p id="letterSignature" class="font-handwriting text-3xl font-bold text-rose-700">
+              — Sudhanshu
+            </p>
+          </div>
+        </div>
+
+        <button onclick="nextPage()" class="w-full mt-4 bg-rose-600 hover:bg-rose-700 text-white font-heading text-lg font-bold py-3 px-6 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+          <span>See Memories & Photos</span>
+          <span>📸</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 4: PHOTO SCRAPBOOK (SLIDESHOW) -->
+    <section id="page-4" class="page-step w-full">
+      <div class="scrapbook-card w-full p-5 sm:p-7 text-center">
+        <div class="pushpin"></div>
+        <div class="washi-tape washi-tape-left washi-tape-yellow"></div>
+        <div class="washi-tape washi-tape-right"></div>
+
+        <h3 class="font-heading text-2xl font-bold text-amber-950 mb-1">
+          Our Memory Lane 🖼️
+        </h3>
+        <p id="photoIntroLine" class="text-xs text-amber-800 mb-3 italic">
+          Every picture holds a story, but with you, it's a whole universe of smiles.
+        </p>
+
+        <!-- Category Filters -->
+        <div class="flex justify-center gap-1.5 mb-3 flex-wrap text-xs font-semibold" id="photoCategoryPills">
+          <!-- Category pills injected via JS -->
+        </div>
+
+        <!-- Polaroid Slide View -->
+        <div class="relative w-full my-1">
+          <div class="polaroid-frame rounded-lg mx-auto max-w-[340px]">
+            <div class="relative w-full h-[230px] sm:h-[260px] bg-slate-100 rounded overflow-hidden flex items-center justify-center">
+              <img id="slideshowImage" src="" alt="Memory Photo" class="w-full h-full object-cover transition-opacity duration-300">
+            </div>
+            <p id="slideshowCaption" class="font-handwriting text-xl sm:text-2xl text-slate-800 mt-2.5 min-h-[56px] flex items-center justify-center px-1 leading-snug">
+              <!-- Caption injected -->
+            </p>
+          </div>
+
+          <!-- Controls -->
+          <button onclick="prevPhoto()" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 bg-white/90 hover:bg-white text-slate-800 p-2.5 rounded-full shadow-lg transition active:scale-90 border border-slate-200">
+            ❮
+          </button>
+          <button onclick="nextPhoto()" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 bg-white/90 hover:bg-white text-slate-800 p-2.5 rounded-full shadow-lg transition active:scale-90 border border-slate-200">
+            ❯
+          </button>
+        </div>
+
+        <!-- Photo Indicator Dots -->
+        <div class="flex justify-center gap-1.5 my-3" id="photoDots">
+          <!-- Dots injected JS -->
+        </div>
+
+        <button onclick="nextPage()" class="w-full mt-1 bg-amber-800 hover:bg-amber-900 text-amber-50 font-heading text-lg font-bold py-2.5 px-6 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+          <span>Let's Plan Celebration</span>
+          <span>🥳</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 5: THE CHOICE PAGE -->
+    <section id="page-5" class="page-step w-full">
+      <div class="scrapbook-card w-full p-5 sm:p-7 text-center relative overflow-visible">
+        <div class="pushpin"></div>
+        <div class="washi-tape washi-tape-left"></div>
+        <div class="washi-tape washi-tape-right washi-tape-teal"></div>
+
+        <h2 class="font-heading text-2xl sm:text-3xl font-extrabold text-amber-950 mb-1">
+          Pick Our Celebration! 🎉
+        </h2>
+        <p class="text-xs text-amber-800 mb-4 font-medium">
+          Choose what we should do together (Choose carefully!)
+        </p>
+
+        <!-- Options Grid & Dodge Button Container -->
+        <div class="grid grid-cols-1 gap-2.5 text-left mb-4 relative min-h-[220px]" id="optionsContainer">
+          <!-- Options injected via JS -->
+        </div>
+
+        <p class="text-[11px] text-amber-700 italic mt-2">
+          *Note: Declining or staying home is strictly not allowed! 😉
+        </p>
+      </div>
+    </section>
+
+    <!-- PAGE 6: CELEBRATION & LOCK-IN -->
+    <section id="page-6" class="page-step w-full">
+      <div class="scrapbook-card w-full p-5 sm:p-7 text-center">
+        <div class="pushpin"></div>
+        <div class="washi-tape washi-tape-left washi-tape-yellow"></div>
+        <div class="washi-tape washi-tape-right"></div>
+
+        <span class="inline-block text-5xl mb-1 animate-bounce">✨</span>
+        <h2 class="font-heading text-2xl sm:text-3xl font-extrabold text-amber-950 mb-1">
+          It's a Date! 🥂
+        </h2>
+        <p class="text-xs text-amber-800 mb-3">
+          Chosen Activity: <span id="selectedOptionBadge" class="font-bold text-rose-600 underline">Night Out</span>
+        </p>
+
+        <!-- Form Box -->
+        <div class="bg-amber-100/60 p-4 rounded-2xl border border-amber-200 text-left space-y-3 mb-4 shadow-inner">
+          <div>
+            <label for="eventDatetime" class="block text-xs font-bold text-amber-900 mb-1">
+              🗓️ Select Preferred Date & Time:
+            </label>
+            <input type="datetime-local" id="eventDatetime" class="w-full px-3 py-2 rounded-xl border border-amber-300 font-sans text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-400">
+          </div>
+
+          <div>
+            <label for="friendEmailInput" class="block text-xs font-bold text-amber-900 mb-1">
+              ✉️ Your Email Address (for confirmation copy):
+            </label>
+            <input type="email" id="friendEmailInput" placeholder="friend@example.com" class="w-full px-3 py-2 rounded-xl border border-amber-300 font-sans text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-400">
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-2">
+          <button onclick="downloadCalendarEvent()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-heading text-base font-bold py-2.5 px-4 rounded-xl shadow transition active:scale-95 flex items-center justify-center gap-2">
+            <span>＋ Add to Calendar (.ics)</span>
+          </button>
+
+          <button onclick="confirmAndFinishFlow()" class="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-heading text-lg font-bold py-3 px-6 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+            <span>Lock It In & Send RSVP 🚀</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="w-full max-w-lg mx-auto text-center mt-3 z-30 text-xs text-amber-900/80 font-medium">
+    Made with ❤️ for lifelong friends • Friendship Day
+  </footer>
+
+  <!-- HOST EDITOR DRAWER -->
+  <div id="hostEditorDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 text-slate-100 p-6 z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-700 pb-4 mb-4">
+      <h3 class="font-heading text-2xl font-bold text-amber-400">✎ Host Customizer</h3>
+      <button onclick="toggleEditDrawer()" class="text-slate-400 hover:text-white text-xl font-bold px-2">✕</button>
+    </div>
+
+    <div class="space-y-4 text-xs font-sans">
+      <div>
+        <label class="block font-bold text-slate-300 mb-1">Host Name (Sender):</label>
+        <input type="text" id="editHostName" class="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-white">
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-300 mb-1">Host Email Address (Receives RSVPs):</label>
+        <input type="email" id="editHostEmail" class="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-white">
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-300 mb-1">Main Note Letter Content:</label>
+        <textarea id="editLetterText" rows="6" class="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-white leading-relaxed"></textarea>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-300 mb-1">Photo Intro Line:</label>
+        <input type="text" id="editPhotoIntro" class="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-white">
+      </div>
+
+      <div>
+        <h4 class="font-bold text-amber-300 mt-4 mb-2 text-sm">Manage Photos & Captions</h4>
+        <div id="editPhotosList" class="space-y-3">
+          <!-- Editable photo entries injected JS -->
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800 pt-4 mt-6">
+        <button onclick="saveEditorStateAndExport()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
+          <span>⬇ Download Personalised Invite (.html)</span>
+        </button>
+        <p class="text-[10px] text-slate-400 mt-2 text-center">
+          Downloads a standalone index.html configured with your edits, ready for hosting!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMBEDDED DATA OBJECT -->
+  <script type="application/json" id="app-data">
+  {
+    "hostName": "Sudhanshu",
+    "hostEmail": "sudhanshushekharsh@gmail.com",
+    "letterText": "People often say that family is the one you're born into. Life taught me something different—it showed me that family can also be the people who choose to stay. Just one year ago, we were strangers, and today I cannot imagine a single chapter of my life without you. You've become my strength when I feel weak, my peace when life gets chaotic, and my biggest reason to smile. There isn't a single thing within my power that I wouldn't do for you, not because I have to, but because loving you all comes naturally. This friendship expects nothing, counts nothing, and keeps no score—it simply loves, supports, forgives, and stays. Thank you for giving me a place where I never have to pretend to be someone else. No matter where life takes us, I hope we never forget that we found a family in each other. And that's one of the greatest blessings of my life. Happy Friendship Day. ❤️",
+    "photoIntro": "Every picture holds a story, but with you, it's a whole universe of love and laughter.",
+    "photos": [
+      {
+        "id": "p1",
+        "category": "squad",
+        "title": "Wedding Squad",
+        "caption": "Not family by blood, but family by choice. Happy Friendship Day to the people who make every moment special. ❤️✨",
+        "url": "1.jpg",
+        "active": true
+      },
+      {
+        "id": "p2",
+        "category": "trio",
+        "title": "Suit Trio",
+        "caption": "A trio built on trust, loyalty, and endless laughter. Nothing can stop us. 👑",
+        "url": "2.jpg",
+        "active": true
+      },
+      {
+        "id": "p3",
+        "category": "trio",
+        "title": "Wedding Shenanigans",
+        "caption": "Photobombing and making memories together, per usual! 😂✨",
+        "url": "3.jpg",
+        "active": true
+      },
+      {
+        "id": "p4",
+        "category": "squad",
+        "title": "Benne Dosa Outing",
+        "caption": "Food runs, lotus flowers, and pure good vibes with the best people. 🌿",
+        "url": "4.jpg",
+        "active": true
+      },
+      {
+        "id": "p5",
+        "category": "individual",
+        "title": "Lake Boating",
+        "caption": "Cruising through life with cool confidence. Never lose that inner spark! 💙",
+        "url": "5.jpg",
+        "active": true
+      },
+      {
+        "id": "p6",
+        "category": "individual",
+        "title": "Unbothered Boat Day",
+        "caption": "Unbothered and peaceful. Thank you for always being our calm in every storm. ❤️",
+        "url": "6.jpg",
+        "active": true
+      },
+      {
+        "id": "p7",
+        "category": "individual",
+        "title": "Graceful Moments",
+        "caption": "Some friendships aren't born overnight—they're chosen. Thank you for choosing to stay! ❤️🌸",
+        "url": "7.jpg",
+        "active": true
+      },
+      {
+        "id": "p8",
+        "category": "individual",
+        "title": "LOVE Bench",
+        "caption": "Golden moments with golden friends! ❤️✨",
+        "url": "8.jpg",
+        "active": true
+      }
+    ],
+    "options": [
+      { "id": "opt1", "title": "📅 Book My Day with Sudhanshu", "desc": "Whatever we end up doing, count me in!", "locked": false }
+    ],
+    "dodgeOption": {
+      "id": "opt_dodge",
+      "title": "🛋️ Do Nothing, Just Sit At My Place",
+      "desc": "The ultimate chill mode: pizza and laughing together"
+    },
+    "dodgeCaptions": [
+      "🛋️ Do Nothing? Nope! 😂",
+      "Try again! You have to come out! ✨",
+      "Oops! Teleported away! 💨",
+      "As if! You love us too much to sit at home! ❤️",
+      "Can't touch this! Pick a real plan! 🕺"
+    ]
+  }
+  </script>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // --- GLOBAL STATE ---
+    let appData = {};
+    let currentPage = 1;
+    const totalPages = 6;
+    let selectedPhotoCategory = 'all';
+    let currentPhotoIndex = 0;
+    let filteredPhotos = [];
+    let selectedOption = "🕺 Night Out!";
+    let dodgeCount = 0;
+
+    // Friendship Themed Progress Steps
+    const stepIcons = [
+      { icon: '💌', label: 'Cover' },
+      { icon: '💛', label: 'Wish' },
+      { icon: '📜', label: 'Letter' },
+      { icon: '📸', label: 'Memories' },
+      { icon: '🎯', label: 'Plan' },
+      { icon: '🥂', label: 'Cheers' }
+    ];
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      checkURLParams();
+      setupProgressDots();
+      renderPageData();
+      setupDatetimeDefault();
+      
+      // Page 1 input keypress
+      document.getElementById('friendNameInput').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') submitNameAndNext();
+      });
+    });
+
+    function loadData() {
+      try {
+        const raw = document.getElementById('app-data').textContent;
+        appData = JSON.parse(raw);
+      } catch(e) {
+        console.error("Failed to parse app data", e);
+      }
+    }
+
+    function checkURLParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      // Pre-fill name if present
+      if(urlParams.has('name')) {
+        const nameParam = urlParams.get('name').trim();
+        if(nameParam) {
+          document.getElementById('friendNameInput').value = nameParam;
+        }
+      }
+      // Show edit button if edit=1
+      if(urlParams.get('edit') === '1') {
+        document.getElementById('editToggleBtn').classList.remove('hidden');
+      }
+    }
+
+    function renderPageData() {
+      // Letter & Signature
+      document.getElementById('letterContent').textContent = appData.letterText;
+      document.getElementById('letterSignature').textContent = `— ${appData.hostName}`;
+      
+      // Photo intro
+      document.getElementById('photoIntroLine').textContent = appData.photoIntro;
+
+      // Filter photos
+      updateFilteredPhotos();
+
+      // Options rendering
+      renderChoiceOptions();
+    }
+
+    // --- FRIENDSHIP THEMED PROGRESS BEADS ---
+    function setupProgressDots() {
+      const container = document.getElementById('progressDots');
+      container.innerHTML = '';
+      stepIcons.forEach((step, idx) => {
+        const i = idx + 1;
+        const bead = document.createElement('div');
+        bead.id = `dot-${i}`;
+        bead.title = step.label;
+        bead.className = `progress-bead flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs font-bold border border-white/30 cursor-pointer select-none ${
+          i === 1 ? 'active' : 'bg-white/10 text-white/70'
+        }`;
+        bead.innerHTML = step.icon;
+        bead.onclick = () => {
+          if(i <= currentPage) showPage(i);
+        };
+        container.appendChild(bead);
+      });
+    }
+
+    function updateProgressDots() {
+      stepIcons.forEach((step, idx) => {
+        const i = idx + 1;
+        const bead = document.getElementById(`dot-${i}`);
+        if(bead) {
+          bead.classList.remove('active', 'completed');
+          if(i === currentPage) {
+            bead.className = 'progress-bead active flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-sm font-bold border-2 border-amber-400 bg-amber-100 text-slate-900 shadow-md';
+          } else if(i < currentPage) {
+            bead.className = 'progress-bead completed flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs border border-rose-300 bg-rose-200/90 text-rose-900 opacity-90';
+          } else {
+            bead.className = 'progress-bead flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs border border-white/20 bg-white/10 text-white/50';
+          }
+        }
+      });
+
+      // Back Button visibility
+      const backBtn = document.getElementById('backBtn');
+      const backPlaceholder = document.getElementById('backPlaceholder');
+      if(currentPage > 1) {
+        backBtn.classList.remove('hidden');
+        backPlaceholder.classList.add('hidden');
+      } else {
+        backBtn.classList.add('hidden');
+        backPlaceholder.classList.remove('hidden');
+      }
+    }
+
+    // --- NAVIGATION LOGIC ---
+    function showPage(pageNumber) {
+      if(pageNumber < 1 || pageNumber > totalPages) return;
+      
+      playChime();
+
+      const currentEl = document.getElementById(`page-${currentPage}`);
+      const nextEl = document.getElementById(`page-${pageNumber}`);
+
+      if(currentEl) currentEl.classList.remove('active');
+      
+      setTimeout(() => {
+        currentPage = pageNumber;
+        if(nextEl) nextEl.classList.add('active');
+        updateProgressDots();
+
+        // Specific actions on page enter
+        if(pageNumber === 2) {
+          const friendName = document.getElementById('friendNameInput').value.trim() || 'My Dear Friend';
+          document.getElementById('wishNameDisplay').textContent = friendName;
+        } else if(pageNumber === 6) {
+          triggerConfetti();
+        }
+      }, 150);
+    }
+
+    function nextPage() { showPage(currentPage + 1); }
+    function prevPage() { showPage(currentPage - 1); }
+
+    function submitNameAndNext() {
+      const nameInput = document.getElementById('friendNameInput').value.trim();
+      if(!nameInput) {
+        document.getElementById('friendNameInput').focus();
+        document.getElementById('friendNameInput').classList.add('border-rose-500', 'animate-pulse');
+        setTimeout(() => {
+          document.getElementById('friendNameInput').classList.remove('animate-pulse');
+        }, 1000);
+        return;
+      }
+      nextPage();
+    }
+
+    // --- PHOTO SCRAPBOOK LOGIC ---
+    function updateFilteredPhotos() {
+      const activePhotos = appData.photos.filter(p => p.active !== false);
+      if(selectedPhotoCategory === 'all') {
+        filteredPhotos = activePhotos;
+      } else {
+        filteredPhotos = activePhotos.filter(p => p.category === selectedPhotoCategory);
+      }
+      if(filteredPhotos.length === 0) filteredPhotos = activePhotos;
+      currentPhotoIndex = 0;
+
+      renderPhotoCategoryPills();
+      renderCurrentPhoto();
+    }
+
+    function renderPhotoCategoryPills() {
+      const container = document.getElementById('photoCategoryPills');
+      const categories = [
+        { id: 'all', label: 'All Moments' },
+        { id: 'squad', label: 'Squad' },
+        { id: 'trio', label: 'Trio' },
+        { id: 'individual', label: 'Individual' }
+      ];
+
+      container.innerHTML = categories.map(cat => `
+        <button onclick="filterPhotos('${cat.id}')" class="px-3 py-1 rounded-full transition-all ${selectedPhotoCategory === cat.id ? 'bg-amber-800 text-amber-50 shadow' : 'bg-amber-100 text-amber-900 hover:bg-amber-200'}">
+          ${cat.label}
+        </button>
+      `).join('');
+    }
+
+    function filterPhotos(catId) {
+      selectedPhotoCategory = catId;
+      updateFilteredPhotos();
+    }
+
+    function renderCurrentPhoto() {
+      if(!filteredPhotos.length) return;
+      const photo = filteredPhotos[currentPhotoIndex];
+      const imgEl = document.getElementById('slideshowImage');
+      const capEl = document.getElementById('slideshowCaption');
+
+      // Crossfade transition
+      imgEl.style.opacity = '0';
+      capEl.style.opacity = '0';
+
+      setTimeout(() => {
+        imgEl.onerror = function() {
+          this.onerror = null; // Prevent infinite error loop
+          this.src = createSvgPlaceholder(photo.title, photo.category);
+        };
+
+        imgEl.src = photo.url;
+        capEl.textContent = photo.caption;
+        
+        imgEl.style.opacity = '1';
+        capEl.style.opacity = '1';
+      }, 150);
+
+      // Render dots
+      const dotsContainer = document.getElementById('photoDots');
+      dotsContainer.innerHTML = filteredPhotos.map((_, i) => `
+        <div class="h-1.5 rounded-full transition-all ${i === currentPhotoIndex ? 'w-5 bg-amber-800' : 'w-1.5 bg-amber-300'}"></div>
+      `).join('');
+    }
+
+    function nextPhoto() {
+      if(!filteredPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % filteredPhotos.length;
+      renderCurrentPhoto();
+    }
+
+    function prevPhoto() {
+      if(!filteredPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + filteredPhotos.length) % filteredPhotos.length;
+      renderCurrentPhoto();
+    }
+
+    // Helper SVG placeholder for visual aesthetic
+    function createSvgPlaceholder(title, category) {
+      const colors = {
+        squad: '#E11D48',
+        trio: '#0284C7',
+        individual: '#D97706'
+      };
+      const color = colors[category] || '#7C3AED';
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+          <rect width="600" height="400" fill="#FFF8F0"/>
+          <circle cx="300" cy="170" r="80" fill="${color}" opacity="0.15"/>
+          <text x="300" y="180" font-family="sans-serif" font-size="64" text-anchor="middle" fill="${color}">📸</text>
+          <text x="300" y="270" font-family="Georgia, serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#334155">${title}</text>
+          <text x="300" y="305" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#64748B">Special Memory Highlight</text>
+        </svg>
+      `;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    // --- CHOICE PAGE & DODGE BUTTON (CONTAINED INSIDE CARD) ---
+    function renderChoiceOptions() {
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+
+      // Standard selectable options
+      appData.options.forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left p-3.5 rounded-2xl border-2 border-amber-200/80 bg-white hover:border-rose-400 hover:bg-rose-50/50 transition-all shadow-sm flex items-center justify-between group active:scale-[0.99] z-10';
+        btn.onclick = () => selectOptionAndNext(opt.title);
+        btn.innerHTML = `
+          <div>
+            <h4 class="font-heading text-lg font-bold text-amber-950 group-hover:text-rose-700">${opt.title}</h4>
+            <p class="text-xs text-slate-500">${opt.desc}</p>
+          </div>
+          <span class="text-rose-500 opacity-0 group-hover:opacity-100 font-bold transition">➔</span>
+        `;
+        container.appendChild(btn);
+      });
+
+      // Add "Do Nothing, Just Sit At My Place" as the DODGE (teleporting) button
+      const dodgeOpt = appData.dodgeOption || {
+        title: "🛋️ Do Nothing, Just Sit At My Place",
+        desc: "The ultimate chill mode: pizza and laughing together"
+      };
+
+      const dodgeBtn = document.createElement('button');
+      dodgeBtn.id = 'dodgeBtn';
+      dodgeBtn.className = 'w-full text-left p-3 rounded-2xl border-2 border-slate-300 bg-slate-100/90 text-slate-600 font-medium transition-transform shadow-sm relative cursor-pointer z-20';
+      dodgeBtn.innerHTML = `
+        <div class="pointer-events-none">
+          <h4 id="dodgeTitle" class="font-heading text-sm sm:text-base font-bold text-slate-700">${dodgeOpt.title}</h4>
+          <p id="dodgeDesc" class="text-[11px] text-slate-500">${dodgeOpt.desc}</p>
+        </div>
+      `;
+
+      // Event listeners for Teleporting strictly inside card container
+      ['mouseenter', 'touchstart', 'focus'].forEach(evt => {
+        dodgeBtn.addEventListener(evt, (e) => {
+          e.preventDefault();
+          teleportDodgeBtn();
+        });
+      });
+
+      container.appendChild(dodgeBtn);
+    }
+
+    function teleportDodgeBtn() {
+      const dodgeBtn = document.getElementById('dodgeBtn');
+      if(!dodgeBtn) return;
+
+      dodgeCount++;
+      playChime();
+
+      // Find the card container bounds to restrict dodge position strictly inside middle card box
+      const pageCard = document.querySelector('#page-5 .scrapbook-card');
+      if(!pageCard) return;
+
+      const cardRect = pageCard.getBoundingClientRect();
+      const btnWidth = Math.min(260, cardRect.width - 40);
+      const btnHeight = 52;
+
+      // Safe bounds inside card box (avoiding title and pushpin)
+      const paddingX = 20;
+      const paddingTop = 90;
+      const paddingBottom = 40;
+
+      const minX = cardRect.left + paddingX;
+      const maxX = cardRect.right - btnWidth - paddingX;
+      const minY = cardRect.top + paddingTop;
+      const maxY = cardRect.bottom - btnHeight - paddingBottom;
+
+      const safeMinX = Math.max(10, minX);
+      const safeMaxX = Math.max(safeMinX, maxX);
+      const safeMinY = Math.max(10, minY);
+      const safeMaxY = Math.max(safeMinY, maxY);
+
+      const randomX = Math.floor(Math.random() * (safeMaxX - safeMinX + 1)) + safeMinX;
+      const randomY = Math.floor(Math.random() * (safeMaxY - safeMinY + 1)) + safeMinY;
+
+      // Create emoji puff at current position
+      const rect = dodgeBtn.getBoundingClientRect();
+      createEmojiPuff(rect.left + rect.width/2, rect.top + rect.height/2);
+
+      dodgeBtn.style.position = 'fixed';
+      dodgeBtn.style.left = `${randomX}px`;
+      dodgeBtn.style.top = `${randomY}px`;
+      dodgeBtn.style.width = `${btnWidth}px`;
+      dodgeBtn.style.zIndex = '100';
+
+      // Dodge sassy text rotation
+      const captions = appData.dodgeCaptions || [
+        "🛋️ Do Nothing? Nope! 😂",
+        "Try again! You have to come out! ✨",
+        "Oops! Teleported away! 💨",
+        "As if! You love us too much! ❤️",
+        "Can't touch this! Pick a real plan! 🕺"
+      ];
+      const nextCaption = captions[dodgeCount % captions.length];
+      document.getElementById('dodgeTitle').textContent = nextCaption;
+
+      dodgeBtn.classList.add('dodge-wobble');
+      setTimeout(() => dodgeBtn.classList.remove('dodge-wobble'), 350);
+    }
+
+    function createEmojiPuff(x, y) {
+      const emojis = ['💥', '💨', '✨', '😜', '🛋️'];
+      const puff = document.createElement('div');
+      puff.className = 'emoji-puff';
+      puff.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      puff.style.left = `${x}px`;
+      puff.style.top = `${y}px`;
+      document.body.appendChild(puff);
+      setTimeout(() => puff.remove(), 600);
+    }
+
+    function selectOptionAndNext(optionTitle) {
+      selectedOption = optionTitle;
+      document.getElementById('selectedOptionBadge').textContent = optionTitle;
+      nextPage();
+    }
+
+    // --- CELEBRATION & CONFETTI ---
+    function triggerConfetti() {
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch(e){}
+    }
+
+    function setupDatetimeDefault() {
+      const dtInput = document.getElementById('eventDatetime');
+      if(dtInput) {
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        nextWeek.setHours(19, 0, 0, 0);
+        dtInput.value = nextWeek.toISOString().slice(0, 16);
+      }
+    }
+
+    // --- .ICS CALENDAR GENERATOR ---
+    function downloadCalendarEvent() {
+      const friendName = document.getElementById('friendNameInput').value.trim() || 'Friend';
+      const dtVal = document.getElementById('eventDatetime').value;
+      
+      let startDate = new Date();
+      if(dtVal) startDate = new Date(dtVal);
+      const endDate = new Date(startDate.getTime() + (3 * 60 * 60 * 1000)); // +3 hours
+
+      const formatDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '');
+
+      const icsContent = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Friendship Day Celebration//EN
+BEGIN:VEVENT
+UID:${Date.now()}@friendshipday
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${formatDate(startDate)}
+DTEND:${formatDate(endDate)}
+SUMMARY:Friendship Day Hangout: ${selectedOption}
+DESCRIPTION:Celebrating Friendship Day with ${friendName} and ${appData.hostName}! Selected Activity: ${selectedOption}.
+LOCATION:To be decided (Surprise Spot)
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Friendship_Day_${selectedOption.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- PDF GENERATION & CONFIRMATION FLOW ---
+    async function confirmAndFinishFlow() {
+      const friendName = document.getElementById('friendNameInput').value.trim() || 'Friend';
+      const friendEmail = document.getElementById('friendEmailInput').value.trim();
+      const eventDt = document.getElementById('eventDatetime').value;
+
+      if(!friendEmail) {
+        alert("Please enter your email address so we can send your RSVP confirmation.");
+        document.getElementById('friendEmailInput').focus();
+        return;
+      }
+
+      const sendBtn = document.querySelector('button[onclick="confirmAndFinishFlow()"]');
+      const originalBtnHtml = sendBtn ? sendBtn.innerHTML : null;
+      if(sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span>Sending your keepsake… ✉️</span>';
+      }
+
+      try {
+        // 1. Generate the PDF (returns its base64 content for the email attachment)
+        const pdfBase64 = await generatePDF(friendName, eventDt);
+
+        // 2. Actually SEND the email (with the PDF attached) to the host,
+        //    from/replying to the email the visitor filled in on this page.
+        await sendConfirmationEmail(friendName, friendEmail, eventDt, pdfBase64);
+
+        if(sendBtn) sendBtn.innerHTML = '<span>Sent! Check your inbox 🎉</span>';
+        alert(`All set! Your RSVP and keepsake PDF have been emailed to ${appData.hostName}. 🎉`);
+      } catch(err) {
+        console.error("Email send failed:", err);
+        alert(`We couldn't send the email automatically (${err && err.text ? err.text : 'connection error'}). Please make sure the EmailJS config at the top of this page is filled in, or contact ${appData.hostEmail} directly.`);
+        if(sendBtn) sendBtn.innerHTML = originalBtnHtml;
+      } finally {
+        if(sendBtn) sendBtn.disabled = false;
+      }
+    }
+
+    // Sends the RSVP email (with the generated PDF attached) via EmailJS.
+    async function sendConfirmationEmail(friendName, friendEmail, eventDt, pdfBase64) {
+      if(!window.emailjs || EMAILJS_PUBLIC_KEY.startsWith("YOUR_")) {
+        throw new Error("EmailJS is not configured yet. Fill in EMAILJS_PUBLIC_KEY / SERVICE_ID / TEMPLATE_ID at the top of the script.");
+      }
+
+      const templateParams = {
+        to_email: appData.hostEmail,
+        from_name: friendName,
+        from_email: friendEmail,
+        reply_to: friendEmail,
+        selected_option: selectedOption,
+        event_datetime: eventDt ? new Date(eventDt).toLocaleString() : 'As soon as possible',
+        message: `${friendName} just locked in our Friendship Day plans! Chosen Activity: ${selectedOption}.`,
+        // In your EmailJS template, set the attachment source to the variable
+        // {{pdf_attachment}} so this base64 PDF gets sent as a real attachment.
+        pdf_attachment: pdfBase64
+      };
+
+      return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+    }
+
+    async function generatePDF(friendName, eventDt) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Background & Header
+      doc.setFillColor(253, 249, 238);
+      doc.rect(0, 0, 210, 297, 'F');
+
+      doc.setFillColor(189, 142, 96);
+      doc.rect(0, 0, 210, 35, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("Happy Friendship Day! ❤️", 105, 20, { align: "center" });
+
+      // Sub-header
+      doc.setTextColor(120, 53, 15);
+      doc.setFontSize(14);
+      doc.text(`A Memory Keepsake For ${friendName} & ${appData.hostName}`, 105, 48, { align: "center" });
+
+      // Note Section Box
+      doc.setDrawColor(217, 119, 6);
+      doc.setFillColor(255, 253, 247);
+      doc.roundedRect(15, 58, 180, 110, 4, 4, 'FD');
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+
+      const splitText = doc.splitTextToSize(appData.letterText, 170);
+      doc.text(splitText, 20, 68);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(225, 29, 72);
+      doc.text(`— ${appData.hostName}`, 175, 160, { align: "right" });
+
+      // Confirmed Plan Summary Box
+      doc.setFillColor(254, 243, 199);
+      doc.roundedRect(15, 175, 180, 35, 4, 4, 'FD');
+
+      doc.setTextColor(146, 64, 14);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("🔒 Locked-in Celebration Plan:", 22, 186);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text(`• Selected Option: ${selectedOption}`, 25, 194);
+      doc.text(`• Scheduled Date & Time: ${eventDt ? new Date(eventDt).toLocaleString() : 'Flexible'}`, 25, 202);
+
+      // Photos Summary Section
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(120, 53, 15);
+      doc.text("📸 Included Memory Highlights:", 15, 222);
+
+      let yPos = 230;
+      appData.photos.filter(p => p.active !== false).slice(0, 3).forEach((photo) => {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(225, 29, 72);
+        doc.text(`• ${photo.title} (${photo.category.toUpperCase()})`, 20, yPos);
+        
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(71, 85, 105);
+        const capLines = doc.splitTextToSize(`"${photo.caption}"`, 165);
+        doc.text(capLines, 25, yPos + 5);
+
+        yPos += 16;
+      });
+
+      // Footer
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text("Generated with love via Digital Friendship Invitation", 105, 288, { align: "center" });
+
+      // Keep a local copy as a keepsake download
+      doc.save(`Friendship_Day_Keepsake_${friendName}.pdf`);
+
+      // Return pure base64 (no "data:application/pdf;base64," prefix) for the
+      // EmailJS attachment field, which expects raw base64 content.
+      const dataUri = doc.output('datauristring');
+      return dataUri.split(',')[1];
+    }
+
+    // --- HOST EDITOR DRAWER LOGIC ---
+    function toggleEditDrawer() {
+      const drawer = document.getElementById('hostEditorDrawer');
+      drawer.classList.toggle('translate-x-full');
+      
+      if(!drawer.classList.contains('translate-x-full')) {
+        populateEditorFields();
+      }
+    }
+
+    function populateEditorFields() {
+      document.getElementById('editHostName').value = appData.hostName || '';
+      document.getElementById('editHostEmail').value = appData.hostEmail || '';
+      document.getElementById('editLetterText').value = appData.letterText || '';
+      document.getElementById('editPhotoIntro').value = appData.photoIntro || '';
+
+      const container = document.getElementById('editPhotosList');
+      container.innerHTML = appData.photos.map((photo, index) => `
+        <div class="p-3 bg-slate-800 rounded border border-slate-700 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-amber-400">${photo.title} (${photo.category})</span>
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" onchange="togglePhotoActive(${index}, this.checked)" ${photo.active !== false ? 'checked' : ''}>
+              <span>Include</span>
+            </label>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Caption:</label>
+            <input type="text" value="${photo.caption}" onchange="updatePhotoCaption(${index}, this.value)" class="w-full px-2 py-1 rounded bg-slate-900 border border-slate-700 text-white">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Upload New Image File:</label>
+            <input type="file" accept="image/*" onchange="handleImageUpload(${index}, this)" class="block w-full text-[10px] text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-amber-600 file:text-white hover:file:bg-amber-700 cursor-pointer">
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleImageUpload(index, fileInput) {
+      const file = fileInput.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        appData.photos[index].url = e.target.result;
+        renderPageData();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function togglePhotoActive(index, isChecked) {
+      appData.photos[index].active = isChecked;
+      renderPageData();
+    }
+
+    function updatePhotoCaption(index, newCaption) {
+      appData.photos[index].caption = newCaption;
+      renderPageData();
+    }
+
+    function saveEditorStateAndExport() {
+      appData.hostName = document.getElementById('editHostName').value.trim() || 'Sudhanshu';
+      appData.hostEmail = document.getElementById('editHostEmail').value.trim() || 'sudhanshushekharsh@gmail.com';
+      appData.letterText = document.getElementById('editLetterText').value.trim();
+      appData.photoIntro = document.getElementById('editPhotoIntro').value.trim();
+
+      const scriptTag = document.getElementById('app-data');
+      scriptTag.textContent = JSON.stringify(appData, null, 2);
+
+      const docClone = document.documentElement.cloneNode(true);
+      const editBtnInClone = docClone.querySelector('#editToggleBtn');
+      if(editBtnInClone) editBtnInClone.remove();
+
+      const htmlContent = "<!DOCTYPE html>\n" + docClone.outerHTML;
+
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `index.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toggleEditDrawer();
+    }
+  </script>
+</body>
+</html>
